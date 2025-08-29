@@ -15,9 +15,10 @@ namespace Microsoft.SCIM.WebHostSample.Provider
     {
         private readonly InMemoryStorage storage;
 
-        public InMemoryGroupProvider()
+        public InMemoryGroupProvider(string contentRootPath)
         {
             this.storage = InMemoryStorage.Instance;
+            this.storage.LoadGroups(contentRootPath);
         }
 
         public override Task<Resource> CreateAsync(Resource resource, string correlationIdentifier)
