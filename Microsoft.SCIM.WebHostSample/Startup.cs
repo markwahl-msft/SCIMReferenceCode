@@ -33,7 +33,7 @@ namespace Microsoft.SCIM.WebHostSample
             this.configuration = configuration;
 
             this.MonitoringBehavior = new ConsoleMonitor();
-            this.ProviderBehavior = new InMemoryProvider();
+            this.ProviderBehavior = new InMemoryProvider(env.ContentRootPath);
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -77,6 +77,7 @@ namespace Microsoft.SCIM.WebHostSample
                         OnAuthenticationFailed = AuthenticationFailed
                     };
                 }
+                options.RequireHttpsMetadata = false;
 
             }
 
