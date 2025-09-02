@@ -7,7 +7,7 @@ namespace Microsoft.SCIM
     using System.Runtime.Serialization;
 
     [DataContract]
-    public abstract class RoleBase : TypedItem
+    public abstract class GroupAttributeValueBase : TypedItem
     {
         [DataMember(Name = AttributeNames.Display, IsRequired = false, EmitDefaultValue = false)]
         public string Display

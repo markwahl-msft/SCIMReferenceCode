@@ -47,6 +47,8 @@ namespace Microsoft.SCIM
         public const string TimeZone = "America/Los_Angeles";
         public const string UserType = "Employee";
 
+        public const string AgenticIdentityName = "Agent";
+
         private readonly ElectronicMailAddress sampleElectronicMailAddressHome;
         private readonly ElectronicMailAddress sampleElectronicMailAddressWork;
 
@@ -59,6 +61,7 @@ namespace Microsoft.SCIM
 
         private readonly Core2Group sampleGroup;
         private readonly Core2EnterpriseUser sampleUser;
+        private readonly AgenticIdentity sampleAgenticIdentity;
 
         public SampleProvider()
         {
@@ -138,6 +141,13 @@ namespace Microsoft.SCIM
                 new Core2Group()
                 {
                     DisplayName = SampleProvider.GroupName,
+                };
+
+            this.sampleAgenticIdentity =
+                new AgenticIdentity()
+                {
+                    DisplayName = SampleProvider.AgenticIdentityName,
+                   
                 };
         }
 
@@ -328,6 +338,11 @@ namespace Microsoft.SCIM
                 Resource[] result = this.QueryGroups(parameters, filter);
                 return result;
             }
+            else if (string.Equals(parameters.SchemaIdentifier, AgenticIdentitySchemaIdentifiers.AgenticIdentity, StringComparison.OrdinalIgnoreCase))
+            {
+                Resource[] result = this.QueryAgenticIdentities(parameters, filter);
+                return result;
+            }
             else
             {
                 string exceptionMessage =
@@ -401,6 +416,68 @@ namespace Microsoft.SCIM
             {
                 results = this.sampleGroup.ToCollection().ToArray();
             }
+
+            return results;
+        }
+
+        private Resource[] QueryAgenticIdentities(IQueryParameters parameters, IFilter filter)
+        {
+            if (null == parameters)
+            {
+                throw new ArgumentNullException(nameof(parameters));
+            }
+
+            if (null == filter)
+            {
+                throw new ArgumentNullException(nameof(filter));
+            }
+
+            if
+            (
+                    null == parameters.ExcludedAttributePaths
+                || !parameters.ExcludedAttributePaths.Any()
+                || parameters.ExcludedAttributePaths.Count != 1
+                || !parameters.ExcludedAttributePaths.Single().Equals(AttributeNames.Members, StringComparison.Ordinal)
+            )
+            {
+                throw new ArgumentException(SystemForCrossDomainIdentityManagementServiceResources.ExceptionQueryNotSupported);
+            }
+
+            if (
+                       !string.Equals(filter.AttributePath, AttributeNames.ExternalIdentifier, StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals(filter.AttributePath, AttributeNames.DisplayName, StringComparison.OrdinalIgnoreCase)
+               )
+            {
+                string exceptionMessage =
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        SystemForCrossDomainIdentityManagementServiceResources.ExceptionFilterAttributePathNotSupportedTemplate,
+                        filter.AttributePath);
+                throw new NotSupportedException(exceptionMessage);
+            }
+
+            if (filter.FilterOperator != ComparisonOperator.Equals)
+            {
+                string exceptionMessage =
+                    string.Format(
+                        CultureInfo.InvariantCulture,
+                        SystemForCrossDomainIdentityManagementServiceResources.ExceptionFilterOperatorNotSupportedTemplate,
+                        filter.FilterOperator);
+                throw new NotSupportedException(exceptionMessage);
+            }
+
+            Resource[] results;
+            results = Enumerable.Empty<Resource>().ToArray();
+            /* NYI add support for searching 
+            if (!string.Equals(filter.ComparisonValue, SampleProvider.AgenticIdentityName, StringComparison.OrdinalIgnoreCase))
+            {
+                results = Enumerable.Empty<Resource>().ToArray();
+            }
+            else
+            {
+                results = this.sampleAgenticIdentities.ToCollection().ToArray();
+            }
+            */
 
             return results;
         }

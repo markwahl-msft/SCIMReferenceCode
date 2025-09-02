@@ -21,7 +21,7 @@ namespace Microsoft.SCIM
 
         private readonly IBulkCreationOperationContext typedContext;
 
-        public BulkCreationOperationState(
+        public BulkCreationOperationState( 
             IRequest<BulkRequest2> request,
             BulkRequestOperation operation,
             IBulkCreationOperationContext context)
@@ -126,6 +126,17 @@ namespace Microsoft.SCIM
                         group.Members = null;
                     }
                 }
+
+                if (operationData.IsResourceType(AgenticIdentitySchemaIdentifiers.AgenticIdentity))
+                {
+                    AgenticIdentity ai = operationDataJson.ToObject<AgenticIdentity>();
+                    resource = ai;
+                    if (ai.Owners != null && ai.Owners.Any())
+                    {
+                        // XXX add links to owner
+                    }
+                }
+
                 if (null == resource)
                 {
                     string invalidOperationExceptionMessage = 
