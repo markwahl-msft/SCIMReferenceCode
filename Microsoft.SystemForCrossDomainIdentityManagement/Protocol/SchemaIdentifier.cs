@@ -47,6 +47,9 @@ namespace Microsoft.SCIM
                 case SchemaIdentifiers.Core2Group:
                     path = ProtocolConstants.PathGroups;
                     return true;
+                case AgenticIdentitySchemaIdentifiers.AgenticIdentity:
+                    path = ProtocolConstants.PathAgenticIdentities;
+                    return true;
                 case SchemaIdentifiers.None:
                     path = SchemaConstants.PathInterface;
                     return true;

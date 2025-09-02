@@ -857,6 +857,11 @@ namespace Microsoft.SCIM
                 return ProtocolConstants.PathGroups;
             }
 
+            if (schematized.Is(AgenticIdentitySchemaIdentifiers.AgenticIdentity))
+            {
+                return ProtocolConstants.PathAgenticIdentities;
+            }
+
             switch (schematized)
             {
                 case UserBase _:
@@ -918,6 +923,8 @@ namespace Microsoft.SCIM
                         return SchemaIdentifiers.Core2EnterpriseUser;
                     case SchemaIdentifiers.Core2Group:
                         return SchemaIdentifiers.Core2Group;
+                    case AgenticIdentitySchemaIdentifiers.AgenticIdentity:
+                        return AgenticIdentitySchemaIdentifiers.AgenticIdentity;
                 }
             }
 

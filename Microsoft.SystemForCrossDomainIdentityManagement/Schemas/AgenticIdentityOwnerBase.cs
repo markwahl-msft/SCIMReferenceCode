@@ -7,21 +7,24 @@ namespace Microsoft.SCIM
     using System.Runtime.Serialization;
 
     [DataContract]
-    public abstract class RoleBase : TypedItem
+    public abstract class AgenticIdentityOwnerBase
     {
-        [DataMember(Name = AttributeNames.Display, IsRequired = false, EmitDefaultValue = false)]
-        public string Display
+        internal AgenticIdentityOwnerBase()
+        {
+        }
+
+        [DataMember(Name = AttributeNames.Type, IsRequired = false, EmitDefaultValue = false)]
+        public string TypeName
         {
             get;
             set;
         }
 
-        [DataMember(Name = AttributeNames.Value, IsRequired = false, EmitDefaultValue = false)]
+        [DataMember(Name = AttributeNames.Value)]
         public string Value
         {
             get;
             set;
         }
-
     }
 }

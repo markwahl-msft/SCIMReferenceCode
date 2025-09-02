@@ -12,6 +12,7 @@ namespace Microsoft.SCIM.WebHostSample.Provider
     {
         private readonly ProviderBase groupProvider;
         private readonly ProviderBase userProvider;
+        private readonly ProviderBase agenticIdentityProvider;
 
         private static readonly Lazy<IReadOnlyCollection<TypeScheme>> TypeSchema =
             new Lazy<IReadOnlyCollection<TypeScheme>>(
@@ -19,23 +20,25 @@ namespace Microsoft.SCIM.WebHostSample.Provider
                     new TypeScheme[]
                     { 
                         SampleTypeScheme.UserTypeScheme,
-                        SampleTypeScheme.GroupTypeScheme, 
+                        SampleTypeScheme.GroupTypeScheme,
                         SampleTypeScheme.EnterpriseUserTypeScheme,
                         SampleTypeScheme.ResourceTypesTypeScheme,
                         SampleTypeScheme.SchemaTypeScheme,
-                        SampleTypeScheme.ServiceProviderConfigTypeScheme
+                        SampleTypeScheme.ServiceProviderConfigTypeScheme,
+                        SampleTypeScheme.AgenticIdentityTypeScheme
                     });
 
         private static readonly Lazy<IReadOnlyCollection<Core2ResourceType>> Types =
             new Lazy<IReadOnlyCollection<Core2ResourceType>>(
                 () =>
-                    new Core2ResourceType[] { SampleResourceTypes.UserResourceType, SampleResourceTypes.GroupResourceType } );
+                    new Core2ResourceType[] { SampleResourceTypes.UserResourceType, SampleResourceTypes.GroupResourceType , SampleResourceTypes.AgenticIdentityResourceType} );
 
 
         public InMemoryProvider(string contentRootPath)
         {
             this.groupProvider = new InMemoryGroupProvider(contentRootPath);
             this.userProvider = new InMemoryUserProvider(contentRootPath);
+            this.agenticIdentityProvider = new InMemoryAgenticIdentityProvider(contentRootPath);
         }
 
         public override IReadOnlyCollection<Core2ResourceType> ResourceTypes => InMemoryProvider.Types.Value;
@@ -54,6 +57,11 @@ namespace Microsoft.SCIM.WebHostSample.Provider
                 return this.groupProvider.CreateAsync(resource, correlationIdentifier);
             }
 
+            if (resource is AgenticIdentity)
+            {
+                return this.agenticIdentityProvider.CreateAsync(resource, correlationIdentifier);
+            }
+
             throw new NotImplementedException();
         }
 
@@ -67,6 +75,11 @@ namespace Microsoft.SCIM.WebHostSample.Provider
             if (resourceIdentifier.SchemaIdentifier.Equals(SchemaIdentifiers.Core2Group))
             {
                 return this.groupProvider.DeleteAsync(resourceIdentifier, correlationIdentifier);
+            }
+
+            if (resourceIdentifier.SchemaIdentifier.Equals(AgenticIdentitySchemaIdentifiers.AgenticIdentity))
+            {
+                return this.agenticIdentityProvider.DeleteAsync(resourceIdentifier, correlationIdentifier);
             }
 
             throw new  NotImplementedException();
@@ -84,6 +97,11 @@ namespace Microsoft.SCIM.WebHostSample.Provider
                 return this.groupProvider.QueryAsync(parameters, correlationIdentifier);
             }
 
+            if (parameters.SchemaIdentifier.Equals(AgenticIdentitySchemaIdentifiers.AgenticIdentity))
+            {
+                return this.agenticIdentityProvider.QueryAsync(parameters, correlationIdentifier);
+            }
+
             throw new NotImplementedException();
         }
 
@@ -99,6 +117,11 @@ namespace Microsoft.SCIM.WebHostSample.Provider
                 return this.groupProvider.ReplaceAsync(resource, correlationIdentifier);
             }
 
+            if (resource is AgenticIdentity)
+            {
+                return this.agenticIdentityProvider.ReplaceAsync(resource, correlationIdentifier);
+            }
+
             throw new NotImplementedException();
         }
 
@@ -112,6 +135,10 @@ namespace Microsoft.SCIM.WebHostSample.Provider
             if (parameters.SchemaIdentifier.Equals(SchemaIdentifiers.Core2Group))
             {
                 return this.groupProvider.RetrieveAsync(parameters, correlationIdentifier);
+            }
+            if (parameters.SchemaIdentifier.Equals(AgenticIdentitySchemaIdentifiers.AgenticIdentity))
+            {
+                return this.agenticIdentityProvider.RetrieveAsync(parameters, correlationIdentifier);
             }
 
             throw new NotImplementedException();
@@ -142,6 +169,11 @@ namespace Microsoft.SCIM.WebHostSample.Provider
             if (patch.ResourceIdentifier.SchemaIdentifier.Equals(SchemaIdentifiers.Core2Group))
             {
                 return this.groupProvider.UpdateAsync(patch, correlationIdentifier);
+            }
+
+            if (patch.ResourceIdentifier.SchemaIdentifier.Equals(AgenticIdentitySchemaIdentifiers.AgenticIdentity))
+            {
+                return this.agenticIdentityProvider.UpdateAsync(patch, correlationIdentifier);
             }
 
             throw new NotImplementedException();

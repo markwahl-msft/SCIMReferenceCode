@@ -14,5 +14,6 @@ namespace Microsoft.SCIM
         public const string RouteUsers = SchemaConstants.PathInterface + ServiceConstants.SeparatorSegments + ProtocolConstants.PathUsers;
         public const string RouteBulk = SchemaConstants.PathInterface + ServiceConstants.SeparatorSegments + ProtocolConstants.PathBulk;
         public const string SeparatorSegments = "/";
+        public const string RouteAgenticIdentities = SchemaConstants.PathInterface + ServiceConstants.SeparatorSegments + ProtocolConstants.PathAgenticIdentities;
     }
 }

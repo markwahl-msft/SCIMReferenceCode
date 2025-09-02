@@ -35,5 +35,20 @@ namespace Microsoft.SCIM.WebHostSample.Resources
                 return groupResource;
             }
         }
+
+        public static Core2ResourceType AgenticIdentityResourceType
+        {
+            get
+            {
+                Core2ResourceType agenticIdentityResource = new Core2ResourceType
+                {
+                    Identifier = AgenticIdentityTypes.AgenticIdentity,
+                    Endpoint = new Uri($"{SampleConstants.SampleScimEndpoint}/AgenticIdentities"),
+                    Schema = $"{SampleConstants.Core2SchemaPrefix}{AgenticIdentityTypes.AgenticIdentity}"
+                };
+
+                return agenticIdentityResource;
+            }
+        }
     }
 }

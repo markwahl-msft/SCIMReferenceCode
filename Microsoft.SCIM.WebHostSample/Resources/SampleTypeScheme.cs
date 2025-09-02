@@ -133,5 +133,26 @@ namespace Microsoft.SCIM.WebHostSample.Resources
                 return serviceProviderConfigType;
             }
         }
+
+        public static TypeScheme AgenticIdentityTypeScheme
+        {
+            get
+            {
+                TypeScheme agenticIdentityType = new TypeScheme
+                {
+                    Description = AgenticIdentityTypes.AgenticIdentity,
+                    Identifier = $"{SampleConstants.Core2SchemaPrefix}{AgenticIdentityTypes.AgenticIdentity}",
+                    Name = AgenticIdentityTypes.AgenticIdentity
+                };
+                agenticIdentityType.AddAttribute(SampleAgenticIdentityAttributes.DisplayNameAttributeScheme);
+                agenticIdentityType.AddAttribute(SampleAgenticIdentityAttributes.OwnersAttributeScheme);
+                agenticIdentityType.AddAttribute(SampleUserAttributes.ActiveAttributeScheme);
+                agenticIdentityType.AddAttribute(SampleUserAttributes.RolessAttributeScheme);
+                agenticIdentityType.AddAttribute(SampleAgenticIdentityAttributes.oAuthClientIdentifiersAttributeScheme);
+                // agenticIdentityType.AddAttribute // XXX include other attributes of the agentic identity agenticApplicationId description entitlements groups roles
+
+                return agenticIdentityType;
+            }
+        }
     }
 }

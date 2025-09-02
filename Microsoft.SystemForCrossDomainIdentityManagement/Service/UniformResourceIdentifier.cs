@@ -28,6 +28,8 @@ namespace Microsoft.SCIM
             @">(" +
             ProtocolConstants.PathGroups +
             UniformResourceIdentifier.RegularExpressionOperatorOr +
+            ProtocolConstants.PathAgenticIdentities +
+            UniformResourceIdentifier.RegularExpressionOperatorOr +
             ProtocolConstants.PathUsers +
             @"{0}))/?(?<" +
             UniformResourceIdentifier.ExpressionGroupNameIdentifier +
@@ -106,6 +108,9 @@ namespace Microsoft.SCIM
                     break;
                 case ProtocolConstants.PathUsers:
                     schemaIdentifier = SchemaIdentifiers.Core2EnterpriseUser;
+                    break;
+                case ProtocolConstants.PathAgenticIdentities:
+                    schemaIdentifier = AgenticIdentitySchemaIdentifiers.AgenticIdentity;
                     break;
                 default:
                     if (null == extensions)

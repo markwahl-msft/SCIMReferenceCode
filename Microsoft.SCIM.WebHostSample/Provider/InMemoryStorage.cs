@@ -15,11 +15,15 @@ namespace Microsoft.SCIM.WebHostSample.Provider
     {
         internal readonly IDictionary<string, Core2Group> Groups;
         internal readonly IDictionary<string, Core2EnterpriseUser> Users;
+        internal readonly IDictionary<string, AgenticIdentity> AgenticIdentities;
+
+        private string _contentRootPath;
 
         private InMemoryStorage()
         {
             this.Groups = new Dictionary<string, Core2Group>();
             this.Users = new Dictionary<string, Core2EnterpriseUser>();
+            this.AgenticIdentities = new Dictionary<string, AgenticIdentity>();
         }
 
         private static readonly Lazy<InMemoryStorage> InstanceValue =
@@ -32,6 +36,7 @@ namespace Microsoft.SCIM.WebHostSample.Provider
         private JArray LoadFromFile(string contentRootPath,string resourceSuffix)
         {
             if (contentRootPath == null) { return null; }
+            _contentRootPath = contentRootPath;
             string combinedPath = contentRootPath + resourceSuffix;
             if (!File.Exists(combinedPath)) { return null; }
             using (StreamReader sr = File.OpenText(combinedPath))
@@ -41,6 +46,20 @@ namespace Microsoft.SCIM.WebHostSample.Provider
                     JArray ja = (JArray)JToken.ReadFrom(reader);
                     return ja;
                 }
+            }
+        }
+
+
+
+        public void SaveAgenticIdentities()
+        {
+            AgenticIdentity[] arr = AgenticIdentities.Values.ToArray();
+            string result = JsonConvert.SerializeObject(arr);
+            string combinedPath = _contentRootPath + "\\agenticidentities-written.json";
+            using (StreamWriter sw = new StreamWriter(combinedPath))
+            {
+                sw.WriteLine(result);
+                sw.Close();
             }
         }
 
@@ -55,12 +74,25 @@ namespace Microsoft.SCIM.WebHostSample.Provider
                 if (item.GetValue("externalId") != null) u.ExternalIdentifier = item.GetValue("externalId").ToString();
                 if (item.GetValue("displayName") != null) u.DisplayName = item.GetValue("displayName").ToString();
                 if (item.GetValue("userName") != null) u.UserName = item.GetValue("userName").ToString();
+                if (item.GetValue("meta") != null) { SetMetadata(u.Metadata, item.GetValue("meta")); }
+                if (item.GetValue("roles") != null) { u.Roles = ParseRoles(item.GetValue("roles")); }
+                //if (item.GetValue("entitlements") != null) { u.Entitlements = ParseEntitlements(item.GetValue("entitlements")); }
+                //if (item.GetValue("groups") != null) { u.Groups = ParseGroups(item.GetValue("groups")); }
+                // name, nickName, profileUrl, emails, addresses, phoneNumbers, ims, photos, x509Certificates
+                if (item.GetValue("userType") != null) u.UserType = item.GetValue("userType").ToString();
+                if (item.GetValue("active") != null) { u.Active = Boolean.Parse(item.GetValue("active").ToString()); }
+                // title preferredLanguage locale, timezone, 
+                if (item.GetValue("urn:ietf:params:scim:schemas:extension:enterprise:2.0:User ") != null)
+                {
+                    JObject c2u = (JObject)item.GetValue("urn:ietf:params:scim:schemas:extension:enterprise:2.0:User ");
+                    // employeeNumber costCenter organization division department manager
+                }
+                
                 Users[itemId] = u;
 
             }
-
-
         }
+
         public void LoadGroups(string contentRootPath) {
             JArray ja = LoadFromFile(contentRootPath, "\\groups.json");
             if (ja == null) { return; }
@@ -71,8 +103,166 @@ namespace Microsoft.SCIM.WebHostSample.Provider
                 g.Identifier = itemId;
                 if (item.GetValue("externalId") != null) g.ExternalIdentifier = item.GetValue("externalId").ToString();
                 if (item.GetValue("displayName") != null) g.DisplayName = item.GetValue("displayName").ToString();
+                if (item.GetValue("meta") != null) { SetMetadata(g.Metadata, item.GetValue("meta")); }
+                if (item.GetValue("members") != null) { g.Members = ParseMembers(item.GetValue("members")); }
                 Groups[itemId] = g;
             }
+        }
+
+        public void LoadAgenticIdentities(string contentRootPath)
+        {
+            JArray ja = LoadFromFile(contentRootPath, "\\agenticidentities.json");
+            if (ja == null) { return; }
+            foreach (JObject item in ja)
+            {
+                string itemId = item.GetValue("id").ToString();
+                AgenticIdentity g = new AgenticIdentity();
+                g.Identifier = itemId;
+                if (item.GetValue("externalId") != null) g.ExternalIdentifier = item.GetValue("externalId").ToString();
+                if (item.GetValue("displayName") != null) g.DisplayName = item.GetValue("displayName").ToString();
+                if (item.GetValue("description") != null) g.Description = item.GetValue("description").ToString();
+                if (item.GetValue("agenticApplicationId") != null) g.AgenticApplicationId = item.GetValue("agenticApplicationId").ToString();
+                if (item.GetValue("active") != null) { g.Active = Boolean.Parse(item.GetValue("active").ToString()); }
+                if (item.GetValue("owners") != null) { g.Owners = ParseOwners(item.GetValue("owners")); }
+                if (item.GetValue("oAuthClientIdentifiers") != null) { SetOAuthClientIdentifiers(g, item.GetValue("oAuthClientIdentifiers")); }
+                if (item.GetValue("meta") != null) { SetMetadata(g.Metadata, item.GetValue("meta")); }
+                if (item.GetValue("roles") != null) { g.Roles = ParseRoles(item.GetValue("roles")); }
+                if (item.GetValue("entitlements") != null) { g.Entitlements = ParseEntitlements(item.GetValue("entitlements")); }
+                if (item.GetValue("groups") != null) { g.Groups = ParseGroups(item.GetValue("groups")); }
+                // XXX custom extensions
+                AgenticIdentities[itemId] = g;
+            }
+        }
+
+        private List<AgenticIdentityOwner> ParseOwners(JToken jt)
+        {
+            List<AgenticIdentityOwner> ra = new List<AgenticIdentityOwner>();
+            JArray ja = (JArray)jt;
+            foreach (JObject item in ja)
+            {
+                AgenticIdentityOwner nr = new AgenticIdentityOwner();
+                if (item.GetValue("value") != null) nr.Value = item.GetValue("value").ToString();
+                
+                // XXX parse JObject  for typename
+                ra.Add(nr);
+            }
+            return ra;
+        }
+
+        private List<Member> ParseMembers(JToken jt)
+        {
+            List<Member> ra = new List<Member>();
+            JArray ja = (JArray)jt;
+            foreach (JObject item in ja)
+            {
+                Member nr = new Member();
+                if (item.GetValue("value") != null) nr.Value = item.GetValue("value").ToString();
+                if (item.GetValue("$ref") != null) ; // XXX
+                ra.Add(nr);
+            }
+            return ra;
+        }
+
+        private List<Role> ParseRoles(JToken jt)
+        {
+            List<Role> ra = new List<Role>();
+            JArray ja = (JArray)jt;
+            foreach (JObject item in ja)
+            {
+                Role nr = new Role();
+                // XXX parse JObject
+                ra.Add(nr);
+            }
+            return ra;
+        }
+
+        private List<Entitlement> ParseEntitlements(JToken jt)
+        {
+            List<Entitlement> ra = new List<Entitlement>();
+            JArray ja = (JArray)jt;
+            foreach (JObject item in ja)
+            {
+                Entitlement nr = new Entitlement();
+                // XXX parse JObject
+                ra.Add(nr);
+            }
+            return ra;
+        }
+        private List<GroupAttributeValue> ParseGroups(JToken jt)
+        {
+            List<GroupAttributeValue> ra = new List<GroupAttributeValue>();
+            JArray ja = (JArray)jt;
+            foreach (JObject item in ja)
+            {
+                GroupAttributeValue nr = new GroupAttributeValue();
+                if (item.GetValue("value") != null) nr.Value = item.GetValue("value").ToString();
+                if (item.GetValue("$ref") != null) ; // XXX
+                if (item.GetValue("display") != null) nr.Display = item.GetValue("display").ToString(); 
+                ra.Add(nr);
+            }
+            return ra;
+        }
+        private void SetOAuthClientIdentifiers(AgenticIdentity g,JToken jt)
+        {
+            JArray ja = (JArray)jt;
+            List<AgenticIdentityOAuthClientIdentifier> l = new List<AgenticIdentityOAuthClientIdentifier>();
+            foreach (JObject item in ja)
+            {
+                AgenticIdentityOAuthClientIdentifier aic = new AgenticIdentityOAuthClientIdentifier();
+                if (item.GetValue("clientId") != null)
+                {
+                    aic.ClientId = item.GetValue("clientId").ToString();
+                }
+                if (item.GetValue("description") != null)
+                {
+                    aic.Description = item.GetValue("description").ToString();
+                }
+                if (item.GetValue("issuer") != null)
+                {
+                    aic.Issuer = item.GetValue("issuer").ToString();
+                }
+                if (item.GetValue("name") != null)
+                {
+                    aic.Name = item.GetValue("name").ToString();
+                }
+
+                if (item.GetValue("subject") != null)
+                {
+                    aic.Subject = item.GetValue("subject").ToString();
+                }
+
+                if (item.GetValue("audiences") != null)
+                {
+                    List<string> naud = new List<string>();
+                    JArray jaud = (JArray)item.GetValue("audiences");
+                    foreach (JValue aud1 in jaud)
+                    {
+                        naud.Add(aud1.ToString());
+                    }
+                    aic.Audiences = naud;
+                }
+ 
+                l.Add(aic);
+            }
+            g.OAuthClientIdentifiers = l;
+        }
+
+        private void SetMetadata(Core2Metadata m,JToken jt)
+        {
+            JObject jo = (JObject)jt;
+
+            if (jo.GetValue("created") != null)
+            {
+                string created = jo.GetValue("created").ToString();
+                m.Created = DateTime.Parse(created);
+            }
+
+            if (jo.GetValue("lastModified") != null)
+            {
+                string lastModified = jo.GetValue("lastModified").ToString();
+                m.LastModified = DateTime.Parse(lastModified);
+            }
+            
         }
     }
 

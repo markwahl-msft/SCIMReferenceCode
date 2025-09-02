@@ -30,6 +30,7 @@ namespace Microsoft.SCIM
         public const string ElectronicMailAddresses = "emails";
         public const string EmployeeNumber = "employeeNumber";
         public const string Endpoint = "endpoint";
+        public const string Entitlements = "entitlements";
         public const string EntityTag = "eTag";
         public const string Expiry = "exp";
         public const string ExtensionEnterpriseUser2 = SchemaIdentifiers.Core2EnterpriseUser;
@@ -37,6 +38,7 @@ namespace Microsoft.SCIM
         public const string FamilyName = "familyName";
         public const string Filter = "filter";
         public const string GivenName = "givenName";
+        public const string Groups = "groups";
         public const string Formatted = "formatted";
         public const string HonorificPrefix = "honorificPrefix";
         public const string HonorificSuffix = "honorificSuffix";

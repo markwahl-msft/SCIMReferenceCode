@@ -48,6 +48,30 @@ namespace Microsoft.SCIM
             set;
         }
 
+        private Resource CreateAgenticIdentity(
+    IReadOnlyCollection<string> schemaIdentifiers,
+    IReadOnlyDictionary<string, object> json)
+        {
+            if (null == schemaIdentifiers)
+            {
+                throw new ArgumentNullException(nameof(schemaIdentifiers));
+            }
+
+            if (null == json)
+            {
+                throw new ArgumentNullException(nameof(json));
+            }
+
+
+            if (schemaIdentifiers.Count != 1)
+            {
+                throw new ArgumentException(SystemForCrossDomainIdentityManagementProtocolResources.ExceptionInvalidResource);
+            }
+
+            Resource result = new AgenticIdentityJsonDeserializingFactory().Create(json);
+            return result;
+        }
+
         private Resource CreateGroup(
             IReadOnlyCollection<string> schemaIdentifiers,
             IReadOnlyDictionary<string, object> json)
@@ -396,6 +420,19 @@ namespace Microsoft.SCIM
             )
             {
                 schematized = this.CreateGroup(schemaIdentifiers, json);
+                return true;
+            }
+
+            if (
+    schemaIdentifiers
+    .SingleOrDefault(
+        (string item) =>
+            item.Equals(
+                AgenticIdentitySchemaIdentifiers.AgenticIdentity,
+                StringComparison.OrdinalIgnoreCase)) != null
+)
+            {
+                schematized = this.CreateAgenticIdentity(schemaIdentifiers, json);
                 return true;
             }
 
