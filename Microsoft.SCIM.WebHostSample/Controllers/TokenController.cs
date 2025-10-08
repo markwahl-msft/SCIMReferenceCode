@@ -5,11 +5,14 @@
 namespace Microsoft.SCIM.WebHostSample.Controllers
 {
     using System;
+    using System.Collections.Generic;
     using System.IdentityModel.Tokens.Jwt;
+    using System.Security.Claims;
     using System.Text;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Configuration;
     using Microsoft.IdentityModel.Tokens;
+    using Microsoft.SCIM.WebHostSample.Provider;
 
     // Controller for generating a bearer token for authorization during testing.
     // This is not meant to replace proper Oauth for authentication purposes.
@@ -25,7 +28,7 @@ namespace Microsoft.SCIM.WebHostSample.Controllers
             this.configuration = Configuration;
         }
 
-        private string GenerateJSONWebToken()
+        private string GenerateJSONWebToken(string cidval)
         {
             SymmetricSecurityKey securityKey =
                 new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this.configuration["Token:IssuerSigningKey"]));
@@ -39,11 +42,18 @@ namespace Microsoft.SCIM.WebHostSample.Controllers
             else
                 expiryTime = startTime.AddMinutes(defaultTokenExpirationTimeInMins);
 
+            List<Claim> claims = null;
+            if (cidval != null)
+            {
+                claims = new List<Claim>();
+                Claim cid = new Claim("demoid", cidval);
+                claims.Add(cid);
+            }
             JwtSecurityToken token =
                 new JwtSecurityToken(
                     this.configuration["Token:TokenIssuer"],
                     this.configuration["Token:TokenAudience"],
-                    null,
+                    claims,
                     notBefore: startTime,
                     expires: expiryTime,
                     signingCredentials: credentials);
@@ -55,9 +65,23 @@ namespace Microsoft.SCIM.WebHostSample.Controllers
         [HttpGet]
         public ActionResult Get()
         {
-            string tokenString = this.GenerateJSONWebToken();
+            string tokenString = this.GenerateJSONWebToken(null);
             return this.Ok(new { token = tokenString });
         }
 
+
+        [HttpGet]
+        [Route("{id}")]
+        public ActionResult Post(string id)
+        {
+            // NYI check the caller - see TokenExchange - this is just a demo
+            AgenticIdentity ai = InMemoryProvider.Singleton.InMemoryAgegenticIdentityProvider.GetById(id);
+            if (ai == null)
+            {
+                return this.Problem("agent ID not found");
+            }
+            string tokenString = this.GenerateJSONWebToken(id);
+            return this.Ok(new { token = tokenString });
+        }
     }
 }

@@ -26,5 +26,19 @@ namespace Microsoft.SCIM
             get;
             set;
         }
+
+        [DataMember(Name=ProtocolAttributeNames.Reference)]
+        public string Reference
+        {
+            get;
+            set;
+        }
+
+        [DataMember(Name=AttributeNames.Display)]
+        public string Display
+        {
+            get;
+            set;
+        }
     }
 }

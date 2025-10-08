@@ -4,20 +4,22 @@
 
 namespace Microsoft.SCIM
 {
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
     using System;
     using System.Collections;
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
     using System.Linq;
+    using System.Net;
     using System.Net.Http;
     using System.Net.Http.Formatting;
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
     using System.Web;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
+    using System.Web.Http;
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "None")]
     public static class ProtocolExtensions
@@ -53,7 +55,7 @@ namespace Microsoft.SCIM
             }
         }
 
-        public static void Apply(this Core2Group group, PatchRequest2 patch)
+        public static bool Apply(this Core2Group group, PatchRequest2 patch,ProviderBase pb)
         {
             if (null == group)
             {
@@ -62,12 +64,12 @@ namespace Microsoft.SCIM
 
             if (null == patch)
             {
-                return;
+                return true;
             }
 
             if (null == patch.Operations || !patch.Operations.Any())
             {
-                return;
+                return true;
             }
 
             foreach (PatchOperation2Combined operation in patch.Operations)
@@ -109,15 +111,19 @@ namespace Microsoft.SCIM
                     }
                 }
 
-                group.Apply(operationInternal);
+                if (group.Apply(operationInternal,pb) == false)
+                {
+                    return false;
+                }
             }
+            return true;
         }
 
-        private static void Apply(this Core2Group group, PatchOperation2 operation)
+        private static bool Apply(this Core2Group group, PatchOperation2 operation, ProviderBase pb)
         {
             if (null == operation || null == operation.Path || string.IsNullOrWhiteSpace(operation.Path.AttributePath))
             {
-                return;
+                return true;
             }
 
             OperationValue value;
@@ -163,7 +169,10 @@ namespace Microsoft.SCIM
                                          (OperationValue item) =>
                                              new Member()
                                              {
-                                                 Value = item.Value
+                                                 Value = item.Value,
+                                                 Reference = item.Reference,
+                                                 Display = item.Display,
+                                                 TypeName = item.TypeName
                                              })
                                      .ToArray();
 
@@ -174,6 +183,12 @@ namespace Microsoft.SCIM
                                 }
                                 foreach (Member member in membersToAdd)
                                 {
+                                    // check that the group member actually exists 
+                                    if (pb.CheckReferenceValidity(member) == false)
+                                    {
+                                        throw new HttpResponseException(HttpStatusCode.NotAcceptable);
+                                        //return false;
+                                    }
                                     //O(n) with the number of group members, so for large groups this is not optimal
                                     if (!group.Members.Any((Member item) =>
                                             string.Equals(item.Value, member.Value, StringComparison.OrdinalIgnoreCase)))
@@ -217,7 +232,10 @@ namespace Microsoft.SCIM
                         }
                     }
                     break;
+                default:
+                    return false;
             }
+            return true;
         }
 
         public static HttpRequestMessage ComposeDeleteRequest(this Resource resource, Uri baseResourceIdentifier)
@@ -868,6 +886,8 @@ namespace Microsoft.SCIM
                     return ProtocolConstants.PathUsers;
                 case GroupBase _:
                     return ProtocolConstants.PathGroups;
+                case AgenticIdentityBase _:
+                    return ProtocolConstants.PathAgenticIdentities;
                 default:
                     string unsupportedTypeName = schematized.GetType().FullName;
                     throw new NotSupportedException(unsupportedTypeName);

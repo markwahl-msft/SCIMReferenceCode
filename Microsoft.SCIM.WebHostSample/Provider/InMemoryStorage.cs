@@ -55,13 +55,38 @@ namespace Microsoft.SCIM.WebHostSample.Provider
         {
             AgenticIdentity[] arr = AgenticIdentities.Values.ToArray();
             string result = JsonConvert.SerializeObject(arr);
-            string combinedPath = _contentRootPath + "\\agenticidentities-written.json";
+            string combinedPath = _contentRootPath + "\\agenticidentities.json";
             using (StreamWriter sw = new StreamWriter(combinedPath))
             {
                 sw.WriteLine(result);
                 sw.Close();
             }
         }
+
+        public void SaveGroups()
+        {
+            Core2Group[] arr = Groups.Values.ToArray();
+            string result = JsonConvert.SerializeObject(arr);
+            string combinedPath = _contentRootPath + "\\groups.json";
+            using (StreamWriter sw = new StreamWriter(combinedPath))
+            {
+                sw.WriteLine(result);
+                sw.Close();
+            }
+        }
+
+        public void SaveUsers()
+        {
+            Core2EnterpriseUser[] arr = Users.Values.ToArray();
+            string result = JsonConvert.SerializeObject(arr);
+            string combinedPath = _contentRootPath + "\\users.json";
+            using (StreamWriter sw = new StreamWriter(combinedPath))
+            {
+                sw.WriteLine(result);
+                sw.Close();
+            }
+        }
+
 
         public void LoadUsers(string contentRootPath) {
             JArray ja = LoadFromFile(contentRootPath, "\\users.json");
@@ -129,7 +154,7 @@ namespace Microsoft.SCIM.WebHostSample.Provider
                 if (item.GetValue("roles") != null) { g.Roles = ParseRoles(item.GetValue("roles")); }
                 if (item.GetValue("entitlements") != null) { g.Entitlements = ParseEntitlements(item.GetValue("entitlements")); }
                 if (item.GetValue("groups") != null) { g.Groups = ParseGroups(item.GetValue("groups")); }
-                // XXX custom extensions
+                // XXX parse the custom extensions
                 AgenticIdentities[itemId] = g;
             }
         }
@@ -158,6 +183,9 @@ namespace Microsoft.SCIM.WebHostSample.Provider
                 Member nr = new Member();
                 if (item.GetValue("value") != null) nr.Value = item.GetValue("value").ToString();
                 if (item.GetValue("$ref") != null) ; // XXX
+                if (item.GetValue("type") != null) nr.TypeName = item.GetValue("type").ToString();
+                if (item.GetValue("display") != null) nr.Display = item.GetValue("display").ToString();
+                
                 ra.Add(nr);
             }
             return ra;
@@ -170,7 +198,7 @@ namespace Microsoft.SCIM.WebHostSample.Provider
             foreach (JObject item in ja)
             {
                 Role nr = new Role();
-                // XXX parse JObject
+                // XXX parse JObject of role 
                 ra.Add(nr);
             }
             return ra;
@@ -183,7 +211,7 @@ namespace Microsoft.SCIM.WebHostSample.Provider
             foreach (JObject item in ja)
             {
                 Entitlement nr = new Entitlement();
-                // XXX parse JObject
+                // XXX parse JObject of entitlement
                 ra.Add(nr);
             }
             return ra;

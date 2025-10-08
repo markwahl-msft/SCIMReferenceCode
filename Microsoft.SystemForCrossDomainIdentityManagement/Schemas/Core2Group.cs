@@ -13,5 +13,15 @@ namespace Microsoft.SCIM
             : base()
         {
         }
+
+        public bool ContainsMemberById(string id)
+        {
+            if (Members == null) return false;
+            foreach (Member m in Members)
+            {
+                if (m.Value == id) return true;
+            }
+            return false;
+        }
     }
 }

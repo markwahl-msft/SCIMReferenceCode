@@ -6,14 +6,22 @@ namespace Microsoft.SCIM
 {
     using System.Collections.Generic;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
 
     public class TrustedJsonFactory : JsonFactory
     {
         public override Dictionary<string, object> Create(string json)
         {
-            Dictionary<string, object> result =
-                (Dictionary<string, object>)JsonConvert.DeserializeObject(
+            object res = JsonConvert.DeserializeObject(
                     json);
+            if (res == null) return null;
+            if (res is JObject)
+            {
+                JObject jo = (JObject)res;
+                return jo.ToObject<Dictionary<string,object>>();
+            }
+            Dictionary<string, object> result =
+                (Dictionary<string, object>)res;
             return result;
         }
 

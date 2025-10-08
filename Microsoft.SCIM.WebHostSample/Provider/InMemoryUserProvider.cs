@@ -2,14 +2,15 @@
 
 namespace Microsoft.SCIM.WebHostSample.Provider
 {
+    using Microsoft.SCIM;
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Linq.Expressions;
     using System.Net;
+    using System.Text;
     using System.Threading.Tasks;
     using System.Web.Http;
-    using Microsoft.SCIM;
 
     public class InMemoryUserProvider : ProviderBase
     {
@@ -21,6 +22,17 @@ namespace Microsoft.SCIM.WebHostSample.Provider
             this.storage.LoadUsers(contentRootPath);
         }
 
+        public String ToHtml()
+        {
+            StringBuilder sb = new StringBuilder();
+            IEnumerable<Core2EnterpriseUser> gl = this.storage.Users.Values;
+            foreach (var ai in gl)
+            {
+                sb.Append(ai.ToString());
+                sb.AppendLine("");
+            }
+            return sb.ToString();
+        }
         public override Task<Resource> CreateAsync(Resource resource, string correlationIdentifier)
         {
             if (resource.Identifier != null)
@@ -54,6 +66,8 @@ namespace Microsoft.SCIM.WebHostSample.Provider
             resource.Identifier = resourceIdentifier;
             this.storage.Users.Add(resourceIdentifier, user);
 
+            this.storage.SaveUsers();
+
             return Task.FromResult(resource);
         }
 
@@ -70,6 +84,8 @@ namespace Microsoft.SCIM.WebHostSample.Provider
             {
                 this.storage.Users.Remove(identifier);
             }
+
+            this.storage.SaveUsers();
 
             return Task.CompletedTask;
         }
@@ -261,6 +277,8 @@ namespace Microsoft.SCIM.WebHostSample.Provider
 
             this.storage.Users[user.Identifier] = user;
             Resource result = user as Resource;
+
+            this.storage.SaveUsers();
             return Task.FromResult(result);
         }
 
@@ -339,6 +357,7 @@ namespace Microsoft.SCIM.WebHostSample.Provider
                 throw new HttpResponseException(HttpStatusCode.NotFound);
             }
 
+            this.storage.SaveUsers();
             return Task.CompletedTask;
         }
     }
