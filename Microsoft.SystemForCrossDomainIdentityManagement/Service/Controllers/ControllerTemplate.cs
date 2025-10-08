@@ -617,8 +617,22 @@ namespace Microsoft.SCIM
                             ServiceNotificationIdentifiers.ControllerTemplatePostNotSupportedException);
                     monitor.Report(notification);
                 }
-
-                throw new HttpResponseException(HttpStatusCode.NotImplemented);
+                var problemDetails = new ProblemDetails
+                {
+                    Status = (int)HttpStatusCode.NotImplemented,
+                    Title = "Not implemented",
+                    Detail = notSupportedException.ToString()
+                };
+                return new ObjectResult(problemDetails)
+                {
+                    StatusCode = (int)HttpStatusCode.NotImplemented
+                };
+                /*
+                HttpResponseMessage erm = new HttpResponseMessage(HttpStatusCode.NotImplemented);
+                erm.Content = new StringContent(notSupportedException.ToString());
+                HttpResponseException ne = new HttpResponseException(erm);
+                throw ne;
+                */
             }
             catch (HttpResponseException httpResponseException)
             {

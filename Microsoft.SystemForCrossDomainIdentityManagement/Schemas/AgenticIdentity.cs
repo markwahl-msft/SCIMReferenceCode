@@ -7,6 +7,7 @@ namespace Microsoft.SCIM
     using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
+    using System.Linq;
     using System.Runtime.Serialization;
 
     [DataContract]
@@ -70,6 +71,45 @@ namespace Microsoft.SCIM
             }
 
             return result;
+        }
+
+        public void UpdateReferencesToGroup(Core2Group group, bool isAdd)
+        {
+            if (Groups == null && isAdd == false) { return; }
+            if (Groups == null)
+            {
+                Groups = new List<GroupAttributeValue>();
+            }
+            if (isAdd == false)
+            {
+                List<GroupAttributeValue> newGroups = new List<GroupAttributeValue>();
+                foreach (GroupAttributeValue gav in Groups)
+                {
+                    if (gav.Value == group.Identifier)
+                    {
+                        // value to remove
+                    } else
+                    {
+                        newGroups.Add(gav);
+                    }
+                }
+                Groups = newGroups;
+            } else
+            {
+                foreach (GroupAttributeValue gav in Groups)
+                {
+                    if (gav.Value == group.Identifier)
+                    {
+                        // already present
+                        return;
+                    }
+                }
+                GroupAttributeValue nv = new GroupAttributeValue();
+                nv.Value = group.Identifier;
+                nv.Display = group.DisplayName;
+                Groups = Groups.Append(nv);
+            }
+
         }
     }
 }

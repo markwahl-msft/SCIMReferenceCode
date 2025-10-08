@@ -26,6 +26,16 @@ namespace Microsoft.SCIM
             set;
         }
 
+        [DataMember(Name= AttributeNames.Type, IsRequired = false)]
+        public string TypeName { get; set; }
+
+        [DataMember(Name=AttributeNames.Display, IsRequired = false)]
+        public string Display
+        {
+            get;
+            set;
+        }
+
         public override string ToString()
         {
             string result =

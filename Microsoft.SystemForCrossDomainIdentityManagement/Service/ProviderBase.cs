@@ -412,5 +412,10 @@ namespace Microsoft.SCIM
 
             await this.UpdateAsync(request.Payload, request.CorrelationIdentifier).ConfigureAwait(false);
         }
+
+        public virtual bool CheckReferenceValidity(Member member)
+        {
+            return true;
+        }
     }
 }

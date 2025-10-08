@@ -7,6 +7,7 @@ namespace Microsoft.SCIM.WebHostSample.Provider
     using System.Linq;
     using System.Linq.Expressions;
     using System.Net;
+    using System.Text;
     using System.Threading.Tasks;
     using System.Web.Http;
     using Microsoft.SCIM;
@@ -21,7 +22,17 @@ namespace Microsoft.SCIM.WebHostSample.Provider
             this.storage.LoadAgenticIdentities(contentRootPath);
         }
 
-        
+        public String ToHtml()
+        {
+            StringBuilder sb = new StringBuilder();
+            IEnumerable<AgenticIdentity> exisitingAgenticIdentities = this.storage.AgenticIdentities.Values;
+            foreach (var ai in exisitingAgenticIdentities)
+            {
+                sb.Append(ai.ToString());
+                sb.AppendLine("");
+            }
+            return sb.ToString();
+        }
 
         public override Task<Resource> CreateAsync(Resource resource, string correlationIdentifier)
         {
@@ -42,7 +53,7 @@ namespace Microsoft.SCIM.WebHostSample.Provider
             (
                 exisitingAgenticIdentities.Any(
                     (AgenticIdentity exisitingAgenticIdentity) =>
-                        string.Equals(exisitingAgenticIdentity.DisplayName, agenticIdentity.DisplayName, StringComparison.Ordinal))
+                        string.Equals(exisitingAgenticIdentity.DisplayName, agenticIdentity.DisplayName, StringComparison.Ordinal)) //vuniqueness NYI
             )
             {
                 throw new HttpResponseException(HttpStatusCode.Conflict);
@@ -51,6 +62,14 @@ namespace Microsoft.SCIM.WebHostSample.Provider
             DateTime created = DateTime.UtcNow;
             agenticIdentity.Metadata.Created = created;
             agenticIdentity.Metadata.LastModified = created;
+
+            // update schemas and active
+            if (agenticIdentity.Schemas == null || agenticIdentity.Schemas.Count == 0)
+            {
+                agenticIdentity.AddSchema(AgenticIdentitySchemaIdentifiers.AgenticIdentity);
+
+            }
+            agenticIdentity.Active = true; // NYI for now assume created as active
 
             string resourceIdentifier = Guid.NewGuid().ToString();
             resource.Identifier = resourceIdentifier;
@@ -81,7 +100,7 @@ namespace Microsoft.SCIM.WebHostSample.Provider
         }
 
         // currently allows only displayname search and not externalId (NYI)
-        public override Task<Resource[]> QueryAsync(IQueryParameters parameters, string correlationIdentifier)  
+        public override Task<Resource[]> QueryAsync(IQueryParameters parameters, string correlationIdentifier)
         {
             if (parameters == null)
             {
@@ -195,6 +214,20 @@ namespace Microsoft.SCIM.WebHostSample.Provider
             return Task.FromResult(result);
         }
 
+        public AgenticIdentity GetById(string identifier)
+        {
+
+            if (this.storage.AgenticIdentities.ContainsKey(identifier))
+            {
+                if (this.storage.AgenticIdentities.TryGetValue(identifier, out AgenticIdentity agenticIdentity))
+                {
+                    
+                    return agenticIdentity;
+                }
+            }
+            return null;
+        }
+
         public override Task<Resource> RetrieveAsync(IResourceRetrievalParameters parameters, string correlationIdentifier)
         {
             if (parameters == null)
@@ -273,6 +306,29 @@ namespace Microsoft.SCIM.WebHostSample.Provider
             this.storage.SaveAgenticIdentities();
 
             return Task.CompletedTask;
+        }
+
+        public bool CheckReferenceValidity(string id)
+        {
+            if (this.storage.AgenticIdentities.TryGetValue(id, out AgenticIdentity agenticIdentity))
+            {
+                return true;
+            }
+            throw new HttpResponseException(HttpStatusCode.NotAcceptable);
+            //return false;
+        }
+
+        public void AddRemoveReferenced(Core2Group group, String id, bool isAdd)
+        {
+            if (this.storage.AgenticIdentities.TryGetValue(id, out AgenticIdentity agenticIdentity))
+            {
+                agenticIdentity.UpdateReferencesToGroup(group, isAdd);
+                agenticIdentity.Metadata.LastModified = DateTime.UtcNow;
+                this.storage.SaveAgenticIdentities();
+            } else if (isAdd)
+            {
+                throw new HttpResponseException(HttpStatusCode.NotFound);
+            }
         }
     }
 }

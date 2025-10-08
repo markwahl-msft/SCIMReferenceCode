@@ -4,15 +4,17 @@ namespace Microsoft.SCIM.WebHostSample.Provider
 {
     using System;
     using System.Collections.Generic;
+    using System.Security.Cryptography.X509Certificates;
+    using System.Text;
     using System.Threading.Tasks;
     using Microsoft.SCIM;
     using Microsoft.SCIM.WebHostSample.Resources;
 
     public class InMemoryProvider : ProviderBase
     {
-        private readonly ProviderBase groupProvider;
-        private readonly ProviderBase userProvider;
-        private readonly ProviderBase agenticIdentityProvider;
+        private readonly InMemoryGroupProvider groupProvider;
+        private readonly InMemoryUserProvider userProvider;
+        private readonly InMemoryAgenticIdentityProvider agenticIdentityProvider;
 
         private static readonly Lazy<IReadOnlyCollection<TypeScheme>> TypeSchema =
             new Lazy<IReadOnlyCollection<TypeScheme>>(
@@ -36,10 +38,36 @@ namespace Microsoft.SCIM.WebHostSample.Provider
 
         public InMemoryProvider(string contentRootPath)
         {
-            this.groupProvider = new InMemoryGroupProvider(contentRootPath);
+            
+            InMemoryAgenticIdentityProvider im = new InMemoryAgenticIdentityProvider(contentRootPath);
+            this.groupProvider = new InMemoryGroupProvider(contentRootPath,im);
             this.userProvider = new InMemoryUserProvider(contentRootPath);
-            this.agenticIdentityProvider = new InMemoryAgenticIdentityProvider(contentRootPath);
+            this.agenticIdentityProvider = im;
+            _singleton = this;
         }
+
+        private static InMemoryProvider _singleton;
+        public static InMemoryProvider Singleton
+        {
+            get { return _singleton;  }
+        }
+
+        public String UsersToHtml()
+        {
+            return userProvider.ToHtml();
+        }
+        public String GroupsToHtml()
+        {
+            return groupProvider.ToHtml();
+        }
+        public String AgenticIdentitiesToHtml() 
+        {
+
+            return agenticIdentityProvider.ToHtml();
+        }
+
+        public InMemoryAgenticIdentityProvider InMemoryAgegenticIdentityProvider {  get { return agenticIdentityProvider; } }
+        public InMemoryGroupProvider InMemoryGroupProvider {  get { return groupProvider; } }
 
         public override IReadOnlyCollection<Core2ResourceType> ResourceTypes => InMemoryProvider.Types.Value;
        
